@@ -1,0 +1,27 @@
+# Core
+fastapi==0.109.0
+python-dotenv==1.0.0
+
+# MCP
+
+# LLM
+ollama==0.1.7
+google-generativeai==0.3.2  # Optional: for Gemini fallback
+
+# Data & APIs
+requests==2.31.0
+pandas==2.1.4
+sqlalchemy==2.0.25
+
+# GitHub
+PyGithub==2.1.1
+
+# GCP (for later deployment)
+google-cloud-bigquery==3.14.0
+google-cloud-secret-manager==2.17.0
+
+# Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+
+

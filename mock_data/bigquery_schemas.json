@@ -1,0 +1,16 @@
+{
+  "analytics.customers_staging": {
+    "exists": false,
+    "expected_schema": [
+      {"name": "customer_id", "type": "STRING", "mode": "REQUIRED"},
+      {"name": "email", "type": "STRING", "mode": "NULLABLE"}
+    ]
+  },
+  "raw.customers": {
+    "exists": true,
+    "schema": [
+      {"name": "customer_id", "type": "STRING", "mode": "REQUIRED"},
+      {"name": "email", "type": "STRING", "mode": "NULLABLE"}
+    ]
+  }
+}

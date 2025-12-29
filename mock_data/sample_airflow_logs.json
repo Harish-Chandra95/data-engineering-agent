@@ -1,0 +1,287 @@
+[
+  {
+    "log_id": "error_001",
+    "timestamp": "2024-12-27T10:15:30Z",
+    "dag_id": "customer_etl_pipeline",
+    "task_id": "load_customer_data",
+    "execution_date": "2024-12-27",
+    "log_level": "ERROR",
+    "message": "google.cloud.exceptions.NotFound: 404 Table analytics.customers_staging not found",
+    "stack_trace": [
+      "File '/usr/local/airflow/dags/customer_etl.py', line 45, in load_data",
+      "    client.query(query).result()",
+      "File '/usr/local/lib/python3.11/site-packages/google/cloud/bigquery/client.py', line 1234, in query",
+      "    raise NotFound(message)"
+    ],
+    "context": {
+      "query": "INSERT INTO analytics.customers_staging SELECT * FROM raw.customers WHERE date = '2024-12-27'",
+      "operator": "BigQueryOperator",
+      "retries": 0
+    }
+  },
+  {
+    "log_id": "error_002",
+    "timestamp": "2024-12-27T11:22:15Z",
+    "dag_id": "sales_reporting_dag",
+    "task_id": "aggregate_sales",
+    "execution_date": "2024-12-27",
+    "log_level": "ERROR",
+    "message": "Concurrent update error: Could not serialize access due to concurrent update",
+    "stack_trace": [
+      "File '/usr/local/airflow/dags/sales_report.py', line 67, in aggregate",
+      "    df.to_gbq('analytics.sales_daily', if_exists='append')",
+      "File '/usr/local/lib/python3.11/site-packages/pandas_gbq/gbq.py', line 1456, in to_gbq",
+      "    raise DatabaseError(str(ex))",
+      "psycopg2.extensions.TransactionRollbackError: could not serialize access due to concurrent update"
+    ],
+    "context": {
+      "operator": "PythonOperator",
+      "retries": 1,
+      "max_retries": 3,
+      "table": "analytics.sales_daily",
+      "concurrent_task_count": 5
+    }
+  },
+  {
+    "log_id": "error_003",
+    "timestamp": "2024-12-27T08:30:45Z",
+    "dag_id": "ftp_file_ingestion",
+    "task_id": "download_customer_files",
+    "execution_date": "2024-12-27",
+    "log_level": "ERROR",
+    "message": "paramiko.ssh_exception.SSHException: Error reading SSH protocol banner",
+    "stack_trace": [
+      "File '/usr/local/airflow/dags/ftp_ingestion.py', line 23, in download_files",
+      "    sftp = ssh.open_sftp()",
+      "File '/usr/local/lib/python3.11/site-packages/paramiko/client.py', line 456, in open_sftp",
+      "    return SFTPClient.from_transport(self._transport)",
+      "File '/usr/local/lib/python3.11/site-packages/paramiko/sftp_client.py', line 123, in from_transport",
+      "    raise SSHException('Error reading SSH protocol banner')"
+    ],
+    "context": {
+      "sftp_host": "ftp.vendor.com",
+      "sftp_port": 22,
+      "sftp_user": "airflow_service",
+      "operator": "SFTPOperator",
+      "retries": 2,
+      "max_retries": 3,
+      "connection_timeout": 30
+    }
+  },
+  {
+    "log_id": "error_004",
+    "timestamp": "2024-12-27T09:15:22Z",
+    "dag_id": "vendor_data_sync",
+    "task_id": "fetch_sftp_files",
+    "execution_date": "2024-12-27",
+    "log_level": "ERROR",
+    "message": "paramiko.ssh_exception.AuthenticationException: Authentication failed",
+    "stack_trace": [
+      "File '/usr/local/airflow/dags/vendor_sync.py', line 34, in fetch_files",
+      "    ssh.connect(hostname, username=username, password=password)",
+      "File '/usr/local/lib/python3.11/site-packages/paramiko/client.py', line 349, in connect",
+      "    raise AuthenticationException('Authentication failed')"
+    ],
+    "context": {
+      "sftp_host": "sftp.partner.io",
+      "sftp_user": "data_sync",
+      "operator": "SFTPOperator",
+      "retries": 0,
+      "error_detail": "Password authentication failed"
+    }
+  },
+  {
+    "log_id": "error_005",
+    "timestamp": "2024-12-27T13:45:00Z",
+    "dag_id": "long_running_pipeline",
+    "task_id": "process_large_dataset",
+    "execution_date": "2024-12-27",
+    "log_level": "ERROR",
+    "message": "AirflowTaskTimeout: Task exceeded maximum timeout of 3600 seconds",
+    "stack_trace": [
+      "File '/usr/local/lib/python3.11/site-packages/airflow/models/taskinstance.py', line 1567, in _execute_task",
+      "    raise AirflowTaskTimeout()",
+      "airflow.exceptions.AirflowTaskTimeout: Task exceeded maximum timeout of 3600 seconds"
+    ],
+    "context": {
+      "operator": "PythonOperator",
+      "execution_timeout": 3600,
+      "actual_runtime": 3601,
+      "retries": 0,
+      "last_log_entry": "Processing partition 845 of 1000...",
+      "log_incomplete": true
+    }
+  },
+  {
+    "log_id": "error_006",
+    "timestamp": "2024-12-27T14:20:33Z",
+    "dag_id": "revenue_analytics",
+    "task_id": "calculate_metrics",
+    "execution_date": "2024-12-27",
+    "log_level": "ERROR",
+    "message": "google.api_core.exceptions.BadRequest: 400 POST https://bigquery.googleapis.com/bigquery/v2/projects/my-project/jobs: Provided Schema does not match Table my-project:analytics.revenue_metrics. Field price has changed type from FLOAT to STRING",
+    "stack_trace": [
+      "File '/usr/local/airflow/dags/revenue_analytics.py', line 78, in calculate",
+      "    job = client.load_table_from_dataframe(df, table_ref)",
+      "File '/usr/local/lib/python3.11/site-packages/google/cloud/bigquery/client.py', line 2345, in load_table_from_dataframe",
+      "    return self._do_resumable_upload(stream, file_obj, headers, retry)",
+      "google.api_core.exceptions.BadRequest: 400 Provided Schema does not match Table"
+    ],
+    "context": {
+      "operator": "PythonOperator",
+      "table": "analytics.revenue_metrics",
+      "expected_type": "FLOAT",
+      "actual_type": "STRING",
+      "field_name": "price",
+      "retries": 0
+    }
+  },
+  {
+    "log_id": "error_007",
+    "timestamp": "2024-12-27T15:10:18Z",
+    "dag_id": "product_analytics",
+    "task_id": "join_product_data",
+    "execution_date": "2024-12-27",
+    "log_level": "ERROR",
+    "message": "google.api_core.exceptions.BadRequest: 400 POST https://bigquery.googleapis.com/bigquery/v2/projects/my-project/queries: Unrecognized name: product_category at [3:5]",
+    "stack_trace": [
+      "File '/usr/local/airflow/dags/product_analytics.py', line 56, in join_data",
+      "    query_job = client.query(query)",
+      "File '/usr/local/lib/python3.11/site-packages/google/cloud/bigquery/client.py', line 3456, in query",
+      "    raise exceptions.from_http_response(exc)",
+      "google.api_core.exceptions.BadRequest: 400 Unrecognized name: product_category at [3:5]"
+    ],
+    "context": {
+      "operator": "BigQueryOperator",
+      "query": "SELECT product_id, product_category, sales FROM analytics.products WHERE date = '2024-12-27'",
+      "table": "analytics.products",
+      "missing_column": "product_category",
+      "available_columns": ["product_id", "category", "sales", "date"],
+      "retries": 0,
+      "line_number": 3,
+      "position": 5
+    }
+  },
+  {
+    "log_id": "error_008",
+    "timestamp": "2024-12-27T16:05:47Z",
+    "dag_id": "data_warehouse_sync",
+    "task_id": "merge_dimensions",
+    "execution_date": "2024-12-27",
+    "log_level": "ERROR",
+    "message": "google.api_core.exceptions.BadRequest: 400 POST https://bigquery.googleapis.com/bigquery/v2/projects/my-project/queries: Could not cast literal '2024-12-27' to type DATE at [5:35]",
+    "stack_trace": [
+      "File '/usr/local/airflow/dags/warehouse_sync.py', line 92, in merge_dims",
+      "    result = client.query(merge_query).result()",
+      "File '/usr/local/lib/python3.11/site-packages/google/cloud/bigquery/client.py', line 3456, in query",
+      "    raise exceptions.from_http_response(exc)",
+      "google.api_core.exceptions.BadRequest: 400 Could not cast literal to type DATE"
+    ],
+    "context": {
+      "operator": "BigQueryOperator",
+      "query": "MERGE INTO warehouse.dim_date USING source ON target.date = '2024-12-27'",
+      "expected_type": "DATE",
+      "actual_type": "STRING",
+      "retries": 0
+    }
+  },
+  {
+    "log_id": "error_009",
+    "timestamp": "2024-12-27T07:22:10Z",
+    "dag_id": "early_morning_etl",
+    "task_id": "extract_transactions",
+    "execution_date": "2024-12-27",
+    "log_level": "ERROR",
+    "message": "airflow.exceptions.AirflowException: Celery command failed - The worker 'worker-pod-3' is not responding",
+    "stack_trace": [
+      "File '/usr/local/lib/python3.11/site-packages/airflow/executors/celery_executor.py', line 234, in sync",
+      "    raise AirflowException(f'The worker {worker_name} is not responding')",
+      "airflow.exceptions.AirflowException: Celery command failed"
+    ],
+    "context": {
+      "executor": "CeleryExecutor",
+      "worker_name": "worker-pod-3",
+      "operator": "PythonOperator",
+      "queue": "default",
+      "retries": 1,
+      "worker_last_heartbeat": "2024-12-27T07:15:00Z",
+      "worker_status": "offline"
+    }
+  },
+  {
+    "log_id": "error_010",
+    "timestamp": "2024-12-27T17:30:55Z",
+    "dag_id": "realtime_processing",
+    "task_id": "stream_events",
+    "execution_date": "2024-12-27",
+    "log_level": "ERROR",
+    "message": "sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) could not connect to server: Connection timed out. Is the server running on host 'airflow-postgres.internal' and accepting TCP/IP connections on port 5432?",
+    "stack_trace": [
+      "File '/usr/local/airflow/dags/realtime_stream.py', line 45, in stream",
+      "    session = Session()",
+      "File '/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py', line 456, in __init__",
+      "    self.bind.connect()",
+      "File '/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py', line 2345, in connect",
+      "    return self._connection_cls(self, **kwargs)",
+      "sqlalchemy.exc.OperationalError: could not connect to server"
+    ],
+    "context": {
+      "operator": "PythonOperator",
+      "database_host": "airflow-postgres.internal",
+      "database_port": 5432,
+      "connection_name": "airflow_db",
+      "retries": 2,
+      "max_retries": 3,
+      "timeout": 30,
+      "error_type": "connection_timeout"
+    }
+  },
+  {
+    "log_id": "error_011",
+    "timestamp": "2024-12-27T18:15:20Z",
+    "dag_id": "metadata_sync",
+    "task_id": "update_task_status",
+    "execution_date": "2024-12-27",
+    "log_level": "ERROR",
+    "message": "airflow.exceptions.AirflowException: Could not acquire lock on airflow metadata database after 120 seconds",
+    "stack_trace": [
+      "File '/usr/local/lib/python3.11/site-packages/airflow/models/taskinstance.py', line 1823, in _run_raw_task",
+      "    self._update_ti_state_in_db(session=session)",
+      "File '/usr/local/lib/python3.11/site-packages/airflow/models/taskinstance.py', line 2456, in _update_ti_state_in_db",
+      "    raise AirflowException('Could not acquire lock on airflow metadata database')"
+    ],
+    "context": {
+      "operator": "PythonOperator",
+      "database": "airflow_metadata",
+      "lock_timeout": 120,
+      "retries": 1,
+      "concurrent_dag_runs": 15,
+      "error_type": "database_lock_timeout"
+    }
+  },
+  {
+    "log_id": "error_012",
+    "timestamp": "2024-12-27T12:40:15Z",
+    "dag_id": "partner_file_transfer",
+    "task_id": "upload_to_sftp",
+    "execution_date": "2024-12-27",
+    "log_level": "ERROR",
+    "message": "socket.timeout: timed out during SFTP file transfer after 300 seconds",
+    "stack_trace": [
+      "File '/usr/local/airflow/dags/partner_transfer.py', line 67, in upload_files",
+      "    sftp.put(local_file, remote_file)",
+      "File '/usr/local/lib/python3.11/site-packages/paramiko/sftp_client.py', line 759, in put",
+      "    return self.putfo(fl, remotepath, file_size, callback, confirm)",
+      "socket.timeout: timed out"
+    ],
+    "context": {
+      "operator": "SFTPOperator",
+      "sftp_host": "sftp.partner.com",
+      "file_size_mb": 2500,
+      "transfer_timeout": 300,
+      "bytes_transferred": 1200000000,
+      "retries": 1,
+      "max_retries": 2
+    }
+  }
+]
