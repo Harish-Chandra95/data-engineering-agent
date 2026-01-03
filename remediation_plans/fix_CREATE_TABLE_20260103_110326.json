@@ -1,0 +1,35 @@
+{
+  "fix_strategy": "CREATE_TABLE",
+  "summary": "Create the missing BigQuery table 'analytics.customers_staging' with the expected schema and daily partitioning by 'date' to resolve NotFound errors during data insertion.",
+  "estimated_impact": "low",
+  "code_changes": [
+    {
+      "file_path": "mock_data/sample_dags/customer_etl.py",
+      "change_type": "modify",
+      "language": "python",
+      "description": "Add table existence check and creation logic for analytics.customers_staging",
+      "original_code": "client.query(query).result()",
+      "new_code": "import logging\nfrom google.cloud import bigquery\nfrom google.cloud.exceptions import NotFound\n\n# Check table exists\ntable_ref = client.dataset('analytics').table('customers_staging')\ntry:\n    client.get_table(table_ref)\n    logging.info(f\"Table {table_ref.path} already exists.\")\nexcept NotFound:\n    logging.info(f\"Table {table_ref.path} not found. Creating table...\")\n    # Create table if missing\n    schema = [\n        bigquery.SchemaField(\"customer_id\", \"STRING\", mode=\"REQUIRED\"),\n        bigquery.SchemaField(\"email\", \"STRING\", mode=\"NULLABLE\"),\n        bigquery.SchemaField(\"date\", \"DATE\", mode=\"REQUIRED\")\n    ]\n    table = bigquery.Table(table_ref, schema=schema)\n    table.time_partitioning = bigquery.TimePartitioning(\n        type_=bigquery.TimePartitioningType.DAY,\n        field=\"date\"\n    )\n    client.create_table(table)\n    logging.info(f\"Table {table_ref.path} created successfully.\")\nexcept Exception as e:\n    logging.error(f\"Error checking or creating table {table_ref.path}: {e}\")\n    raise # Re-raise to fail the task if table creation/check fails unexpectedly\n\nclient.query(query).result()",
+      "line_number": 28
+    }
+  ],
+  "ddl_statements": [
+    {
+      "table_name": "analytics.customers_staging",
+      "statement_type": "CREATE",
+      "ddl": "CREATE TABLE IF NOT EXISTS analytics.customers_staging (\n  customer_id STRING NOT NULL,\n  email STRING,\n  date DATE NOT NULL\n)\nPARTITION BY date",
+      "description": "Create missing staging table with customer_id, email, and date columns, partitioned by date."
+    }
+  ],
+  "config_changes": [],
+  "testing_steps": [
+    "Run unit tests for modified DAG (if applicable).",
+    "Deploy the DAG to a development environment.",
+    "Manually trigger the DAG run.",
+    "Verify that the `analytics.customers_staging` table is created in BigQuery if it doesn't exist.",
+    "Verify that data is successfully inserted into `analytics.customers_staging`.",
+    "Check BigQuery logs for any errors related to table creation or insertion."
+  ],
+  "rollback_plan": "If issues occur: 1) Revert code changes in `customer_etl.py`. 2) Manually drop the `analytics.customers_staging` table if it was created incorrectly or caused further issues.",
+  "implementation_notes": "Deploy during a low-traffic window. Monitor the first few DAG runs closely to ensure table creation and data insertion proceed as expected. Ensure the BigQuery service account has `bigquery.tables.create` permissions for the `analytics` dataset."
+}
